@@ -2,6 +2,25 @@
 //
 // Kernel for ensuring Pong game rules are valid for a particular state transition
 
+
+//////////////////////////////////////////
+// utils
+//////////////////////////////////////////
+
+fn signum(x: i64) -> i64 {
+  if (x < 0) {
+    -1
+  } else if (x == 0) {
+    0
+  } else {
+    1
+  }
+}
+
+//////////////////////////////////////////
+// end utils
+//////////////////////////////////////////
+
 global canvas_width: i64 = 750;
 global canvas_height: i64 = 585;
 
@@ -25,23 +44,6 @@ struct GameObject {
   height: i64,
   dy: i64,
 }
-
-
-// GOAL: validate state change on following i/o
-//
-// ball_x: i64
-// ball_y: i64
-// ball_dx: i64
-// ball_dy: i64
-// ball_tick: i64
-// leftPaddle_x: i64
-// leftPaddle_y: i64
-// leftPaddle_dy: i64
-// leftPaddle_score: i64
-// rightPaddle_x: i64
-// rightPaddle_y: i64
-// rightPaddle_dy: i64
-// rightPaddle_score: i64
 
 
 // // check for collision between two objects using axis-aligned bounding box (AABB)
@@ -121,7 +123,21 @@ fn init_pong(
 }
 
 
-
+// validate state change on following i/o
+//
+// ball_x: i64
+// ball_y: i64
+// ball_dx: i64
+// ball_dy: i64
+// ball_tick: i64
+// leftPaddle_x: i64
+// leftPaddle_y: i64
+// leftPaddle_dy: i64
+// leftPaddle_score: i64
+// rightPaddle_x: i64
+// rightPaddle_y: i64
+// rightPaddle_dy: i64
+// rightPaddle_score: i64
 fn step_pong(
   in_ball_x: i64,
   in_ball_y: i64,
@@ -181,7 +197,7 @@ fn step_pong(
   let mut ball_dx = in_ball_dx;
 
   // game active
-  assert(game_tick <= max_game_ticks, "game tick past end of game");
+  assert(game_tick < max_game_ticks, "game tick past end of game");
 
   // paddle velocity valid
   assert((leftPaddle.dy == 0) | (leftPaddle.dy == -paddleSpeed) | (leftPaddle.dy == paddleSpeed));
@@ -210,85 +226,92 @@ fn step_pong(
   ball.x += ball_dx;
   ball.y += ball.dy;
 
-  // // prevent ball from going through walls by changing its velocity
-  // if (ball.y < grid_size) {
-  //   ball.y = grid_size;
-  //   ball.dy *= -1;
-  // }
-  // else if (ball.y + grid_size > canvas_height - grid_size) {
-  //   ball.y = canvas_height - grid_size * 2;
-  //   ball.dy *= -1;
-  // }
-  //
-  // // points scored: reset ball if it goes past paddle
-  // if (ball.x < 0 || ball.x > canvas_width) {
-  //
-  //   if (ball.x < 0) {
-  //     rightPaddle_score += 1;
-  //   } else {
-  //     leftPaddle_score += 1;
-  //   }
-  //
-  //   ball.x = canvas_width_half;
-  //   ball.y = canvas_height_half;
-  //
-  //   // swap directions and reset speed
-  //   ball_dx = ballSpeed * Math.sign(ball_dx) * -1;
-  //   ball.dy = -ballSpeed * Math.sign(ball.dy) * -1;
-  // }
-  //
-  // // check to see if ball collides with paddle. if they do change x velocity
-  // if (collides(ball, leftPaddle)) {
-  //   ball_dx *= -1;
-  //   ball_dx += Math.sign(ball_dx);
-  //   ball.dy += Math.sign(ball.dy);
-  //
-  //   // move ball next to the paddle otherwise the collision will happen again
-  //   // in the next frame
-  //   ball.x = leftPaddle.x + leftPaddle.width;
-  // }
-  // else if (collides(ball, rightPaddle)) {
-  //   ball_dx *= -1;
-  //   ball_dx += Math.sign(ball_dx);
-  //   ball.dy += Math.sign(ball.dy);
-  //
-  //   // move ball next to the paddle otherwise the collision will happen again
-  //   // in the next frame
-  //   ball.x = rightPaddle.x - ball.width;
-  // }
+  // prevent ball from going through walls by changing its velocity
+  if (ball.y < grid_size) {
+    ball.y = grid_size;
+    ball.dy *= -1;
+  }
+  else if (ball.y + grid_size > canvas_height - grid_size) {
+    ball.y = canvas_height - grid_size * 2;
+    ball.dy *= -1;
+  }
 
-    game_tick += 1;
+  // points scored: reset ball if it goes past paddle
+  if (ball.x < 0 | ball.x > canvas_width) {
+  
+    if (ball.x < 0) {
+      rightPaddle_score += 1;
+    } else {
+      leftPaddle_score += 1;
+    }
+  
+    ball.x = canvas_width_half;
+    ball.y = canvas_height_half;
+  
+    // swap directions and reset speed
+    ball_dx = ballSpeed * signum(ball_dx) * -1;
+    ball.dy = -ballSpeed * signum(ball.dy) * -1;
+  }
 
-    assert(ball.x            == out_ball_x,            "unexpected end of tick: ball.x           ");
-    assert(ball.y            == out_ball_y,            "unexpected end of tick: ball.y           ");
-    assert(ball_dx           == out_ball_dx,           "unexpected end of tick: ball_dx          ");
-    assert(ball.dy           == out_ball_dy,           "unexpected end of tick: ball.dy          ");
-    assert(game_tick         == out_game_tick,         "unexpected end of tick: game_tick        ");
-    assert(leftPaddle.x      == out_leftPaddle_x,      "unexpected end of tick: leftPaddle_x     ");
-    assert(leftPaddle.y      == out_leftPaddle_y,      "unexpected end of tick: leftPaddle_y     ");
-    assert(leftPaddle.dy     == out_leftPaddle_dy,     "unexpected end of tick: leftPaddle_dy    ");
-    assert(leftPaddle_score  == out_leftPaddle_score,  "unexpected end of tick: leftPaddle_score ");
-    assert(rightPaddle.x     == out_rightPaddle_x,     "unexpected end of tick: rightPaddle_x    ");
-    assert(rightPaddle.y     == out_rightPaddle_y,     "unexpected end of tick: rightPaddle_y    ");
-    assert(rightPaddle.dy    == out_rightPaddle_dy,    "unexpected end of tick: rightPaddle_dy   ");
-    assert(rightPaddle_score == out_rightPaddle_score, "unexpected end of tick: rightPaddle_score");
+  // check to see if ball collides with paddle. if they do change x velocity
+  if (collides(ball, leftPaddle)) {
+    ball_dx *= -1;
+    ball_dx += signum(ball_dx);
+    ball.dy += signum(ball.dy);
+  
+    // move ball next to the paddle otherwise the collision will happen again
+    // in the next frame
+    ball.x = leftPaddle.x + leftPaddle.width;
+  }
+  else if (collides(ball, rightPaddle)) {
+    ball_dx *= -1;
+    ball_dx += signum(ball_dx);
+    ball.dy += signum(ball.dy);
+  
+    // move ball next to the paddle otherwise the collision will happen again
+    // in the next frame
+    ball.x = rightPaddle.x - ball.width;
+  }
+
+  game_tick += 1;
+
+  assert(ball.x            == out_ball_x,            "unexpected end of tick: ball.x           ");
+  assert(ball.y            == out_ball_y,            "unexpected end of tick: ball.y           ");
+  assert(ball_dx           == out_ball_dx,           "unexpected end of tick: ball_dx          ");
+  assert(ball.dy           == out_ball_dy,           "unexpected end of tick: ball.dy          ");
+  assert(game_tick         == out_game_tick,         "unexpected end of tick: game_tick        ");
+  assert(leftPaddle.x      == out_leftPaddle_x,      "unexpected end of tick: leftPaddle_x     ");
+  assert(leftPaddle.y      == out_leftPaddle_y,      "unexpected end of tick: leftPaddle_y     ");
+  assert(leftPaddle.dy     == out_leftPaddle_dy,     "unexpected end of tick: leftPaddle_dy    ");
+  assert(leftPaddle_score  == out_leftPaddle_score,  "unexpected end of tick: leftPaddle_score ");
+  assert(rightPaddle.x     == out_rightPaddle_x,     "unexpected end of tick: rightPaddle_x    ");
+  assert(rightPaddle.y     == out_rightPaddle_y,     "unexpected end of tick: rightPaddle_y    ");
+  assert(rightPaddle.dy    == out_rightPaddle_dy,    "unexpected end of tick: rightPaddle_dy   ");
+  assert(rightPaddle_score == out_rightPaddle_score, "unexpected end of tick: rightPaddle_score");
 }
 
 
 
 // end of game assertions
-fn final_step() {
-  // if (max_game_ticks == game_tick) {
-  //   if (leftPaddle_score > rightPaddle_score) {
-  //     alert(`Game over: left player won with ${leftPaddle_score} points!`)
-  //   } else if (rightPaddle_score > leftPaddle_score) {
-  //     alert(`Game over: right player won with ${rightPaddle_score} points!`)
-  //   } else {
-  //     // TODO tie breaker?
-  //     alert(`Game tied!`)
-  //   }
-  // }
-
+fn final_step(
+  out_game_tick: i64,
+  out_leftPaddle_score: i64,
+  out_leftPaddle_won: bool,
+  out_rightPaddle_score: i64,
+  out_rightPaddle_won: bool,
+) {
+  if (max_game_ticks == out_game_tick) {
+    if (out_leftPaddle_score > out_rightPaddle_score) {
+      assert(out_leftPaddle_won);
+      assert(!out_rightPaddle_won);
+    } else if (out_rightPaddle_score > out_leftPaddle_score) {
+      assert(!out_leftPaddle_won);
+      assert(out_rightPaddle_won);
+    } else {
+      assert(!out_leftPaddle_won);
+      assert(!out_rightPaddle_won);
+    }
+  }
 }
 
 
@@ -368,6 +391,14 @@ fn main(x: Field, y: pub Field) {
     rightPaddle.y,
     rightPaddle.dy,
     rightPaddle_score,
+  );
+
+  final_step(
+    max_game_ticks,
+    leftPaddle_score,
+    false, // out_leftPaddle_won
+    rightPaddle_score,
+    false, // out_rightPaddle_won
   );
 
   assert(x != y);
