@@ -21,6 +21,27 @@
 <body>
 <canvas width="750" height="585" id="game"></canvas>
 <script>
+
+  // https://stackoverflow.com/a/30832210
+  // Function to download data to a file
+  function download_as_file(data, filename, type) {
+      var file = new Blob([data], {type: type});
+      if (window.navigator.msSaveOrOpenBlob) // IE10+
+          window.navigator.msSaveOrOpenBlob(file, filename);
+      else { // Others
+          var a = document.createElement("a"),
+                  url = URL.createObjectURL(file);
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function() {
+              document.body.removeChild(a);
+              window.URL.revokeObjectURL(url);  
+          }, 0); 
+      }
+  }
+
   const canvas = document.getElementById('game');
   const canvas_width = canvas.width;
   const canvas_height = canvas.height;
@@ -29,6 +50,7 @@
   const paddleHeight = grid_size * 5; // 80
   const maxPaddleY = canvas_height - grid_size - paddleHeight;
 
+  const game_ticks = 128;
   const paddleSpeed = 6;
   const ballSpeed = 5;
 
@@ -79,8 +101,25 @@
            obj1.y + obj1.height > obj2.y;
   }
 
+  // global game log
+  var game_log = [];
+
   // game loop
   function loop() {
+    // check if game over
+    if (game_ticks <= ball.tick) {
+      if (leftPaddle.score > rightPaddle.score) {
+        alert(`Game over: left player won with ${leftPaddle.score} points!`)
+      } else if (rightPaddle.score > leftPaddle.score) {
+        alert(`Game over: right player won with ${rightPaddle.score} points!`)
+      } else {
+        // TODO tie breaker?
+        alert(`Game tied!`)
+      }
+
+      download_as_file(JSON.stringify(game_log), 'ping_game_log.json', 'text/plain');
+      return
+    }
 
     // move paddles by their velocity
     leftPaddle.y += leftPaddle.dy;
@@ -154,7 +193,7 @@
 
     ball.tick += 1;
 
-    console.log({
+    let game_log_item = {
       ball_x: ball.x,
       ball_y: ball.y,
       ball_dx: ball.dx,
@@ -168,7 +207,9 @@
       rightPaddle_y: rightPaddle.y,
       rightPaddle_dy: rightPaddle.dy,
       rightPaddle_score: rightPaddle.score,
-    })
+    };
+    console.log(game_log_item);
+    game_log.push(game_log_item);
 
     ////////////////////////////////////
     // ANIMATION
