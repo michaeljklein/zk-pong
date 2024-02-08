@@ -2,20 +2,6 @@
 //
 // Kernel for ensuring Pong game rules are valid for a particular state transition
 
-// ball_x: uint
-// ball_y: uint
-// ball_dx: int
-// ball_dy: int
-// ball_tick: uint
-// leftPaddle_x: uint
-// leftPaddle_y: uint
-// leftPaddle_dy: int
-// leftPaddle_score: uint
-// rightPaddle_x: uint
-// rightPaddle_y: uint
-// rightPaddle_dy: int
-// rightPaddle_score: uint
-
 global canvas_width: u64 = 750;
 global canvas_height: u64 = 585;
 
@@ -31,6 +17,24 @@ global canvas_height_half: u64 = 292; // == 585 // 2
 global paddleHeight_half: u64 = 40;
 
 global paddle_y0: u64 = 252; // canvas_height_half - paddleHeight_half;
+
+
+// GOAL: validate state change on following i/o
+//
+// ball_x: u64
+// ball_y: u64
+// ball_dx: i64
+// ball_dy: i64
+// ball_tick: u64
+// leftPaddle_x: u64
+// leftPaddle_y: u64
+// leftPaddle_dy: i64
+// leftPaddle_score: u64
+// rightPaddle_x: u64
+// rightPaddle_y: u64
+// rightPaddle_dy: i64
+// rightPaddle_score: u64
+
 
 fn main(x: Field, y: pub Field) {
     assert(x != y);
