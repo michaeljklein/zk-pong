@@ -43,24 +43,20 @@
   }
 
   const canvas = document.getElementById('game');
-  const canvas_width = canvas.width;
-  const canvas_height = canvas.height;
   const context = canvas.getContext('2d');
 
+  const canvas_width = canvas.width;
+  const canvas_height = canvas.height;
   const grid_size = 15;
-  const paddleHeight = grid_size * 5; // 80
-  const maxPaddleY = canvas_height - grid_size - paddleHeight;
-  const game_ticks = 128;
+  const paddleHeight = 80; // grid_size * 5;
+  const maxPaddleY = 495; // canvas_height - grid_size - paddleHeight;
+  const max_game_ticks = 128;
   const paddleSpeed = 6;
   const ballSpeed = 5;
-
   const canvas_width_half = 375; // == 750 // 2
   const canvas_height_half = 292; // == 585 // 2
   const paddleHeight_half = 40;
-
-  const ball_x0 = canvas_width_half;
-  const ball_y0 = canvas_height_half;
-  const paddle_y0 = canvas_height_half - paddleHeight_half;
+  const paddle_y0 = 252; // canvas_height_half - paddleHeight_half;
 
   const leftPaddle = {
     // start in the middle of the game on the left side
@@ -70,9 +66,7 @@
     height: paddleHeight,
 
     // paddle velocity: 0 | paddleSpeed
-    dy: 0,
-
-    score: 0
+    dy: 0
   };
   const rightPaddle = {
     // start in the middle of the game on the right side
@@ -82,23 +76,25 @@
     height: paddleHeight,
 
     // paddle velocity: 0 | paddleSpeed
-    dy: 0,
-
-    score: 0
+    dy: 0
   };
   const ball = {
     // start in the middle of the game
-    x: ball_x0,
-    y: ball_y0,
+    x: canvas_width_half,
+    y: canvas_height_half,
     width: grid_size,
     height: grid_size,
 
     // ball velocity (start going to the top-right corner)
-    dx: ballSpeed,
+    // just dy here so all three objects have the same shape
     dy: -ballSpeed,
-
-    tick: 0
   };
+
+  var leftPaddle_score = 0;
+  var rightPaddle_score = 0;
+  var game_tick = 0;
+  var ball_dx = ballSpeed;
+  var game_log = [];
 
   // check for collision between two objects using axis-aligned bounding box (AABB)
   // @see https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection
@@ -109,17 +105,14 @@
            obj1.y + obj1.height > obj2.y;
   }
 
-  // global game log
-  var game_log = [];
-
   // game loop
   function loop() {
     // check if game over
-    if (game_ticks <= ball.tick) {
-      if (leftPaddle.score > rightPaddle.score) {
-        alert(`Game over: left player won with ${leftPaddle.score} points!`)
-      } else if (rightPaddle.score > leftPaddle.score) {
-        alert(`Game over: right player won with ${rightPaddle.score} points!`)
+    if (max_game_ticks <= game_tick) {
+      if (leftPaddle_score > rightPaddle_score) {
+        alert(`Game over: left player won with ${leftPaddle_score} points!`)
+      } else if (rightPaddle_score > leftPaddle_score) {
+        alert(`Game over: right player won with ${rightPaddle_score} points!`)
       } else {
         // TODO tie breaker?
         alert(`Game tied!`)
@@ -149,7 +142,7 @@
     }
 
     // move ball by its velocity
-    ball.x += ball.dx;
+    ball.x += ball_dx;
     ball.y += ball.dy;
 
     // prevent ball from going through walls by changing its velocity
@@ -166,23 +159,23 @@
     if (ball.x < 0 || ball.x > canvas_width) {
 
       if (ball.x < 0) {
-        rightPaddle.score += 1;
+        rightPaddle_score += 1;
       } else {
-        leftPaddle.score += 1;
+        leftPaddle_score += 1;
       }
 
-      ball.x = ball_x0;
-      ball.y = ball_y0;
+      ball.x = canvas_width_half;
+      ball.y = canvas_height_half;
 
       // swap directions and reset speed
-      ball.dx = ballSpeed * Math.sign(ball.dx) * -1;
+      ball_dx = ballSpeed * Math.sign(ball_dx) * -1;
       ball.dy = -ballSpeed * Math.sign(ball.dy) * -1;
     }
 
     // check to see if ball collides with paddle. if they do change x velocity
     if (collides(ball, leftPaddle)) {
-      ball.dx *= -1;
-      ball.dx += Math.sign(ball.dx);
+      ball_dx *= -1;
+      ball_dx += Math.sign(ball_dx);
       ball.dy += Math.sign(ball.dy);
 
       // move ball next to the paddle otherwise the collision will happen again
@@ -190,8 +183,8 @@
       ball.x = leftPaddle.x + leftPaddle.width;
     }
     else if (collides(ball, rightPaddle)) {
-      ball.dx *= -1;
-      ball.dx += Math.sign(ball.dx);
+      ball_dx *= -1;
+      ball_dx += Math.sign(ball_dx);
       ball.dy += Math.sign(ball.dy);
 
       // move ball next to the paddle otherwise the collision will happen again
@@ -199,22 +192,22 @@
       ball.x = rightPaddle.x - ball.width;
     }
 
-    ball.tick += 1;
+    game_tick += 1;
 
     let game_log_item = {
+      game_tick: game_tick,
       ball_x: ball.x,
       ball_y: ball.y,
-      ball_dx: ball.dx,
+      ball_dx: ball_dx,
       ball_dy: ball.dy,
-      ball_tick: ball.tick,
       leftPaddle_x: leftPaddle.x,
       leftPaddle_y: leftPaddle.y,
       leftPaddle_dy: leftPaddle.dy,
-      leftPaddle_score: leftPaddle.score,
+      leftPaddle_score: leftPaddle_score,
       rightPaddle_x: rightPaddle.x,
       rightPaddle_y: rightPaddle.y,
       rightPaddle_dy: rightPaddle.dy,
-      rightPaddle_score: rightPaddle.score,
+      rightPaddle_score: rightPaddle_score,
     };
     console.log(game_log_item);
     game_log.push(game_log_item);
@@ -246,8 +239,8 @@
     }
 
     let score_height = canvas_height - 32;
-    context.fillText(`Score: ${leftPaddle.score}`, 32, score_height);
-    context.fillText(`Score: ${rightPaddle.score}`, canvas_width - 64, score_height);
+    context.fillText(`Score: ${leftPaddle_score}`, 32, score_height);
+    context.fillText(`Score: ${rightPaddle_score}`, canvas_width - 64, score_height);
   }
 
   // listen to keyboard events to move the paddles
