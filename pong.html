@@ -90,12 +90,6 @@
     dy: -ballSpeed,
   };
 
-  var leftPaddle_score = 0;
-  var rightPaddle_score = 0;
-  var game_tick = 0;
-  var ball_dx = ballSpeed;
-  var game_log = [];
-
   // check for collision between two objects using axis-aligned bounding box (AABB)
   // @see https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection
   function collides(obj1, obj2) {
@@ -104,6 +98,12 @@
            obj1.y < obj2.y + obj2.height &&
            obj1.y + obj1.height > obj2.y;
   }
+
+  var leftPaddle_score = 0;
+  var rightPaddle_score = 0;
+  var game_tick = 0;
+  var ball_dx = ballSpeed;
+  var game_log = [];
 
   // game loop
   function loop() {
