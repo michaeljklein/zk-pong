@@ -2,46 +2,46 @@
 //
 // Kernel for ensuring Pong game rules are valid for a particular state transition
 
-global canvas_width: u64 = 750;
-global canvas_height: u64 = 585;
+global canvas_width: i64 = 750;
+global canvas_height: i64 = 585;
 
-global grid_size: u64 = 15;
-global paddleHeight: u64 = 80; // grid_size * 5;
-global maxPaddleY: u64 = 495; // canvas_height - grid_size - paddleHeight;
-global max_game_ticks: u64 = 128;
-global paddleSpeed: u64 = 6;
+global grid_size: i64 = 15;
+global paddleHeight: i64 = 80; // grid_size * 5;
+global maxPaddleY: i64 = 495; // canvas_height - grid_size - paddleHeight;
+global max_game_ticks: i64 = 128;
+global paddleSpeed: i64 = 6;
 global ballSpeed: i64 = 5;
 
-global canvas_width_half: u64 = 375; // == 750 // 2
-global canvas_height_half: u64 = 292; // == 585 // 2
-global paddleHeight_half: u64 = 40;
-global paddle_y0: u64 = 252; // canvas_height_half - paddleHeight_half;
+global canvas_width_half: i64 = 375; // == 750 // 2
+global canvas_height_half: i64 = 292; // == 585 // 2
+global paddleHeight_half: i64 = 40;
+global paddle_y0: i64 = 252; // canvas_height_half - paddleHeight_half;
 
 
 struct GameObject {
-  x: u64,
-  y: u64,
-  width: u64,
-  height: u64,
+  x: i64,
+  y: i64,
+  width: i64,
+  height: i64,
   dy: i64,
 }
 
 
 // GOAL: validate state change on following i/o
 //
-// ball_x: u64
-// ball_y: u64
+// ball_x: i64
+// ball_y: i64
 // ball_dx: i64
 // ball_dy: i64
-// ball_tick: u64
-// leftPaddle_x: u64
-// leftPaddle_y: u64
+// ball_tick: i64
+// leftPaddle_x: i64
+// leftPaddle_y: i64
 // leftPaddle_dy: i64
-// leftPaddle_score: u64
-// rightPaddle_x: u64
-// rightPaddle_y: u64
+// leftPaddle_score: i64
+// rightPaddle_x: i64
+// rightPaddle_y: i64
 // rightPaddle_dy: i64
-// rightPaddle_score: u64
+// rightPaddle_score: i64
 
 
 // // check for collision between two objects using axis-aligned bounding box (AABB)
@@ -62,19 +62,19 @@ fn collides(obj1: GameObject, obj2: GameObject) -> bool {
 
 // assert initial state valid
 fn init_pong(
-  out_ball_x: u64,
-  out_ball_y: u64,
+  out_ball_x: i64,
+  out_ball_y: i64,
   out_ball_dx: i64,
   out_ball_dy: i64,
-  out_game_tick: u64,
-  out_leftPaddle_x: u64,
-  out_leftPaddle_y: u64,
+  out_game_tick: i64,
+  out_leftPaddle_x: i64,
+  out_leftPaddle_y: i64,
   out_leftPaddle_dy: i64,
-  out_leftPaddle_score: u64,
-  out_rightPaddle_x: u64,
-  out_rightPaddle_y: u64,
+  out_leftPaddle_score: i64,
+  out_rightPaddle_x: i64,
+  out_rightPaddle_y: i64,
   out_rightPaddle_dy: i64,
-  out_rightPaddle_score: u64
+  out_rightPaddle_score: i64
 ) {
   let leftPaddle = GameObject {
       x: grid_size * 2,
@@ -100,9 +100,9 @@ fn init_pong(
     dy: -ballSpeed,
   };
 
-  let leftPaddle_score: u64 = 0;
-  let rightPaddle_score: u64 = 0;
-  let game_tick: u64 = 0;
+  let leftPaddle_score: i64 = 0;
+  let rightPaddle_score: i64 = 0;
+  let game_tick: i64 = 0;
   let ball_dx: i64 = ballSpeed;
 
   assert(ball.x            == out_ball_x,            "unexpected initial tick: ball.x           ");
@@ -123,33 +123,33 @@ fn init_pong(
 
 
 fn step_pong(
-  in_ball_x: u64,
-  in_ball_y: u64,
+  in_ball_x: i64,
+  in_ball_y: i64,
   in_ball_dx: i64,
   in_ball_dy: i64,
-  in_game_tick: u64,
-  in_leftPaddle_x: u64,
-  in_leftPaddle_y: u64,
+  in_game_tick: i64,
+  in_leftPaddle_x: i64,
+  in_leftPaddle_y: i64,
   in_leftPaddle_dy: i64,
-  in_leftPaddle_score: u64,
-  in_rightPaddle_x: u64,
-  in_rightPaddle_y: u64,
+  in_leftPaddle_score: i64,
+  in_rightPaddle_x: i64,
+  in_rightPaddle_y: i64,
   in_rightPaddle_dy: i64,
-  in_rightPaddle_score: u64,
+  in_rightPaddle_score: i64,
 
-  out_ball_x: u64,
-  out_ball_y: u64,
+  out_ball_x: i64,
+  out_ball_y: i64,
   out_ball_dx: i64,
   out_ball_dy: i64,
-  out_game_tick: u64,
-  out_leftPaddle_x: u64,
-  out_leftPaddle_y: u64,
+  out_game_tick: i64,
+  out_leftPaddle_x: i64,
+  out_leftPaddle_y: i64,
   out_leftPaddle_dy: i64,
-  out_leftPaddle_score: u64,
-  out_rightPaddle_x: u64,
-  out_rightPaddle_y: u64,
+  out_leftPaddle_score: i64,
+  out_rightPaddle_x: i64,
+  out_rightPaddle_y: i64,
   out_rightPaddle_dy: i64,
-  out_rightPaddle_score: u64
+  out_rightPaddle_score: i64
 ) {
   let mut leftPaddle = GameObject {
       x: in_leftPaddle_x,
@@ -180,31 +180,36 @@ fn step_pong(
   let mut game_tick = in_game_tick;
   let mut ball_dx = in_ball_dx;
 
+  // game active
   assert(game_tick <= max_game_ticks, "game tick past end of game");
 
-  // // move paddles by their velocity
-  // leftPaddle.y += leftPaddle.dy;
-  // rightPaddle.y += rightPaddle.dy;
-  //
-  // // prevent paddles from going through walls
-  // if (leftPaddle.y < grid_size) {
-  //   leftPaddle.y = grid_size;
-  // }
-  // else if (leftPaddle.y > maxPaddleY) {
-  //   leftPaddle.y = maxPaddleY;
-  // }
-  //
-  // if (rightPaddle.y < grid_size) {
-  //   rightPaddle.y = grid_size;
-  // }
-  // else if (rightPaddle.y > maxPaddleY) {
-  //   rightPaddle.y = maxPaddleY;
-  // }
-  //
-  // // move ball by its velocity
-  // ball.x += ball_dx;
-  // ball.y += ball.dy;
-  //
+  // paddle velocity valid
+  assert((leftPaddle.dy == 0) | (leftPaddle.dy == -paddleSpeed) | (leftPaddle.dy == paddleSpeed));
+  assert((rightPaddle.dy == 0) | (rightPaddle.dy == -paddleSpeed) | (rightPaddle.dy == paddleSpeed));
+
+  // move paddles by their velocity
+  leftPaddle.y += leftPaddle.dy;
+  rightPaddle.y += rightPaddle.dy;
+
+  // prevent paddles from going through walls
+  if (leftPaddle.y < grid_size) {
+    leftPaddle.y = grid_size;
+  }
+  else if (leftPaddle.y > maxPaddleY) {
+    leftPaddle.y = maxPaddleY;
+  }
+  
+  if (rightPaddle.y < grid_size) {
+    rightPaddle.y = grid_size;
+  }
+  else if (rightPaddle.y > maxPaddleY) {
+    rightPaddle.y = maxPaddleY;
+  }
+
+  // move ball by its velocity
+  ball.x += ball_dx;
+  ball.y += ball.dy;
+
   // // prevent ball from going through walls by changing its velocity
   // if (ball.y < grid_size) {
   //   ball.y = grid_size;
@@ -313,10 +318,27 @@ fn main(x: Field, y: pub Field) {
     dy: -ballSpeed,
   };
 
-  let leftPaddle_score: u64 = 0;
-  let rightPaddle_score: u64 = 0;
-  let game_tick: u64 = 0;
+  let leftPaddle_score: i64 = 0;
+  let rightPaddle_score: i64 = 0;
+  let game_tick: i64 = 0;
   let ball_dx: i64 = ballSpeed;
+
+
+  init_pong(
+    ball.x,
+    ball.y,
+    ball_dx,
+    ball.dy,
+    game_tick,
+    leftPaddle.x,
+    leftPaddle.y,
+    leftPaddle.dy,
+    leftPaddle_score,
+    rightPaddle.x,
+    rightPaddle.y,
+    rightPaddle.dy,
+    rightPaddle_score,
+  );
 
   step_pong(
     ball.x,
@@ -333,8 +355,8 @@ fn main(x: Field, y: pub Field) {
     rightPaddle.dy,
     rightPaddle_score,
 
-    ball.x,
-    ball.y,
+    ball.x + ball_dx,
+    ball.y + ball.dy,
     ball_dx,
     ball.dy,
     game_tick + 1,
