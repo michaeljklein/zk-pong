@@ -1,7 +1,8 @@
 [package]
 name = "ping_circuit"
-type = "lib"
+type = "bin"
 authors = [""]
 compiler_version = ">=0.22.0"
 
 [dependencies]
+pong = { path = "../pong_circuit" }
