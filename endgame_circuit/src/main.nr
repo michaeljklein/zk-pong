@@ -58,38 +58,48 @@ use dep::std;
 //
 // [Field; 7]
 
+
+
+
 global MAX_PINGS = 256;
-global PUBLIC_INPUTS = 1792; // 7 * 256
+// global PUBLIC_INPUTS = 1792; // 7 * 256
+global PUBLIC_INPUTS = 850; // 7 * 256
 
 fn main(
     verification_key : [Field; 114],
-    proof_a : [Field; 94],
-    proof_b : [Field; 94],
-    public_inputs : [Field; 1],
     key_hash : Field,
+    index : Field,
+    proof_a : [[Field; 97]; PUBLIC_INPUTS],
+    public_inputs : [[Field; 3]; PUBLIC_INPUTS],
     input_aggregation_object : [Field; 16],
 ) -> pub [Field; 16] {
     let output_aggregation_object_a = std::verify_proof(
         verification_key.as_slice(),
-        proof_a.as_slice(),
-        public_inputs.as_slice(),
+        proof_a[index].as_slice(),
+        public_inputs[index].as_slice(),
         key_hash,
         input_aggregation_object
     );
 
-    let output_aggregation_object = std::verify_proof(
-        verification_key.as_slice(),
-        proof_b.as_slice(),
-        public_inputs.as_slice(),
-        key_hash,
-        output_aggregation_object_a
-    );
+    output_aggregation_object_a
 
-    let mut output = [0; 16];
-    for i in 0..16 {
-        output[i] = output_aggregation_object[i];
-    }
-    output
+    // let output_aggregation_object = std::verify_proof(
+    //     verification_key.as_slice(),
+    //     proof_b.as_slice(),
+    //     public_inputs.as_slice(),
+    //     key_hash,
+    //     output_aggregation_object_a
+    // );
+    //
+    // let mut output = [0; 16];
+    // for i in 0..16 {
+    //     output[i] = output_aggregation_object[i];
+    // }
+    // output
 }
+
+
+
+
 
 
