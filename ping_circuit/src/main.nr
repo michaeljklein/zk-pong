@@ -47,7 +47,6 @@ fn main(
     out_rightPaddle_score: i64,
 
     // TODO: also need a public finish game hash here
-    out_game_tick: i64,
     out_leftPaddle_score: i64,
     out_leftPaddle_won: bool,
     out_rightPaddle_score: i64,
