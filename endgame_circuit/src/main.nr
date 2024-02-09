@@ -65,7 +65,7 @@ fn main(
     verification_key : [Field; 114],
     proof_a : [Field; 94],
     proof_b : [Field; 94],
-    public_inputs : [Field; PUBLIC_INPUTS],
+    public_inputs : [Field; 1],
     key_hash : Field,
     input_aggregation_object : [Field; 16],
 ) -> pub [Field; 16] {
