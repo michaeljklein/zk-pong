@@ -4,66 +4,74 @@
 
 use dep::std;
 
-// fn main(
-//     ping_type: pub Field, 
-//     // These inputs are only used by the 
-//     in_ball_x: i64,
-//     in_ball_y: i64,
-//     in_ball_dx: i64,
-//     in_ball_dy: i64,
-//     in_game_tick: i64,
-//     in_leftPaddle_x: i64,
-//     in_leftPaddle_y: i64,
-//     in_leftPaddle_dy: i64,
-//     in_leftPaddle_score: i64,
-//     in_rightPaddle_x: i64,
-//     in_rightPaddle_y: i64,
-//     in_rightPaddle_dy: i64,
-//     in_rightPaddle_score: i64,
-//     // TODO: we probably want a hash of all `in` and `out` state
-//     // This hash will be the public input we use rather than each of these values
-//
-//     out_ball_x: i64,
-//     out_ball_y: i64,
-//     out_ball_dx: i64,
-//     out_ball_dy: i64,
-//     out_game_tick: i64,
-//     out_leftPaddle_x: i64,
-//     out_leftPaddle_y: i64,
-//     out_leftPaddle_dy: i64,
-//     out_leftPaddle_score: i64,
-//     out_rightPaddle_x: i64,
-//     out_rightPaddle_y: i64,
-//     out_rightPaddle_dy: i64,
-//     out_rightPaddle_score: i64,
-//
-//     // TODO: also need a public finish game hash here
-//     out_leftPaddle_score: i64,
-//     out_leftPaddle_won: bool,
-//     out_rightPaddle_score: i64,
-//     out_rightPaddle_won: bool,
-//
-//     message: [u8;38],
-//     hashed_message: [u8;32],
-//     pub_key_x: [u8;32],
-//     pub_key_y: [u8;32],
-//     signature: [u8;64]
-// ) {
-
-// empty_ping: Field
-// in_state_hash: Field
-// out_state_hash: Field
-// user_id: Field
-// signature: [Field; 3] // eddsa posiedon
-//
-// [Field; 7]
-
-
-
 
 global MAX_PINGS = 256;
 // global PUBLIC_INPUTS = 1792; // 7 * 256
 global PUBLIC_INPUTS = 850; // 7 * 256
+
+
+
+// step kernel: (state_N, state_N', move_N', sig_N')
+// - state_N' = step(move_N', state_N)
+// - verify(p(N % 2), state_N', sig_N')
+//
+// if i == 0:
+//   // initialize
+//   old_state = initial_state
+//   new_state = game_log[i].0
+//   move      = game_log[i].1
+//   sig       = game_log[i].2
+// else:
+//   // step
+//   old_state = game_log[i].0
+//   new_state = game_log[i+1].0
+//   move      = game_log[i+1].1
+//   sig       = game_log[i+1].2
+//
+// step_kernel(old_state, new_state, move, sig)
+//
+// // finalize
+// if index + 1 == MAX_PINGS:
+//   finalize_kernel
+// end
+fn step_kernel<S, T>(
+    old_state: S,
+    new_state: S,
+    move: T,
+    index: Field,
+    sig: (),
+    summary: pub Field,
+    user_1: Field,
+    user_2: Field,
+) {
+
+    // bootstrap with old_state = new_state = initial_state
+    if (index == 0) {
+        old_state.assert_initial_state();
+        new_state.assert_initial_state();
+
+    }
+
+    if (index + 1 == MAX_PINGS) {
+        new_state.assert_final_state();
+    }
+
+    // do this in state.assert_step()
+    // assert(old_state.is_first_user != new_state.is_first_user);
+    old_state.assert_step(move, new_state);
+
+    let current_user = if new_state.is_first_user {
+        user_1
+    } else {
+        user_2
+    };
+    verify(current_user, new_state, sig)
+}
+
+
+
+
+
 
 fn main(
     verification_key : [Field; 114],
