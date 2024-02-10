@@ -5,6 +5,21 @@
   <title>Basic Pong HTML Game</title>
   <meta charset="UTF-8">
   <style>
+
+    <!-- begin zk CSS -->
+    .outer {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+    }
+    .inner {
+        width: 45%;
+        border: 1px solid black;
+        padding: 10px;
+        word-wrap: break-word;
+    }
+    <!-- end zk CSS -->
+
     html, body {
       height: 100%;
       margin: 0;
@@ -19,7 +34,20 @@
   </style>
 </head>
 <body>
+
+  <!-- begin zk -->
+  <script type="module" src="/app.js"></script>
+  <h1>Very basic Noir app</h1>
+  <div class="outer">
+    <div id="logs" class="inner"><h2>Logs</h2></div>
+    <div id="results" class="inner"><h2>Proof</h2></div>
+  </div>
+  <!-- end zk -->
+
+<!-- Pong canvas -->
 <canvas width="750" height="585" id="game"></canvas>
+
+
 <script>
 
   // https://stackoverflow.com/a/30832210
@@ -118,7 +146,8 @@
         alert(`Game tied!`)
       }
 
-      download_as_file(JSON.stringify(game_log), 'ping_game_log.json', 'text/plain');
+      <!-- TODO: enable to download file -->
+      <!-- download_as_file(JSON.stringify(game_log), 'ping_game_log.json', 'text/plain'); -->
       return
     }
 
@@ -209,7 +238,8 @@
       rightPaddle_dy: rightPaddle.dy,
       rightPaddle_score: rightPaddle_score,
     };
-    console.log(game_log_item);
+    <!-- DEBUG game log -->
+    <!-- console.log(game_log_item); -->
     game_log.push(game_log_item);
 
     ////////////////////////////////////

@@ -1,0 +1,40 @@
+{
+  "name": "zk-pong",
+  "version": "1.0.0",
+  "description": "zk-pong frontend",
+  "main": "app.js",
+  "type": "module",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "vite --open",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/michaeljklein/zk-pong.git"
+  },
+  "keywords": [
+    "zero",
+    "knowledge",
+    "pong"
+  ],
+  "author": "Michael J. Klein",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/michaeljklein/zk-pong/issues"
+  },
+  "homepage": "https://github.com/michaeljklein/zk-pong#readme",
+  "dependencies": {
+    "@noir-lang/backend_barretenberg": "^0.23.0",
+    "@noir-lang/noir_js": "^0.23.0"
+  },
+  "devDependencies": {
+    "rollup-plugin-copy": "^3.5.0",
+    "vite": "^5.1.1",
+    "vite-plugin-top-level-await": "^1.4.1"
+  }
+}
