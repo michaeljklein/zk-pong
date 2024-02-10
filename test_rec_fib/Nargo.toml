@@ -1,0 +1,7 @@
+[package]
+name = "test_rec_fib"
+type = "bin"
+authors = [""]
+compiler_version = ">=0.22.0"
+
+[dependencies]
