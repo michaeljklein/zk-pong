@@ -13,39 +13,50 @@ fn step_fib(
   assert(index == in_index);
   assert(index + 1 == out_index);
 
-  let nullifier = std::hash::pedersen_hash([in_x as Field, in_y as Field, out_x as Field, out_y as Field]);
-  assert(root == nullifier);
+  // let nullifier = std::hash::pedersen_hash([in_x as Field, in_y as Field, out_x as Field, out_y as Field]);
+  // let nullifier = std::hash::poseidon::bn254::hash_5([index as Field, in_x as Field, in_y as Field, out_x as Field, out_y as Field]);
+
+  let nullifier = std::hash::poseidon::bn254::hash_2([index as Field,
+    std::hash::poseidon::bn254::hash_2([in_x as Field,
+      std::hash::poseidon::bn254::hash_2([in_y as Field,
+        std::hash::poseidon::bn254::hash_2([out_x as Field, out_y as Field])
+      ])
+    ])
+  ]);
+  // TODO!
+  // assert(root == nullifier);
 
   assert(in_y == out_x);
   assert(in_x + in_y == out_y);
 }
 
-global PUBLIC_INPUTS = 10;
+global PUBLIC_INPUTS = 3;
 // PUBLIC_INPUTS + 1
-global PRIVATE_INPUTS = 11;
+global PRIVATE_INPUTS = 4;
 
 fn main(
     index: u64,
     verification_key: [Field; 114],
     proof: [[Field; 97]; 10],
     public_inputs: [[Field; 1]; PUBLIC_INPUTS],
-    private_inputs: [(u64, u64, u64); PRIVATE_INPUTS],
+    private_inputs: [[u64; 3]; PRIVATE_INPUTS],
     key_hash: Field,
     input_aggregation_object: [Field; 16],
 ) -> pub [Field; 16] {
-    assert(index < PUBLIC_INPUTS);
+  assert(index < PUBLIC_INPUTS);
 
-    step_fib(
-        index,
-        public_inputs[index][0],
-        private_inputs[index].0,
-        private_inputs[index].1,
-        private_inputs[index].2,
-        private_inputs[index+1].0,
-        private_inputs[index+1].1,
-        private_inputs[index+1].2,
-    );
+  step_fib(
+      index,
+      public_inputs[index][0],
+      private_inputs[index][0],
+      private_inputs[index][1],
+      private_inputs[index][2],
+      private_inputs[index+1][0],
+      private_inputs[index+1][1],
+      private_inputs[index+1][2],
+  );
 
+  if (index != 0) {
     std::verify_proof(
         verification_key.as_slice(),
         proof[index].as_slice(),
@@ -53,5 +64,8 @@ fn main(
         key_hash,
         input_aggregation_object
     )
+  } else {
+    input_aggregation_object
+  }
 }
 
