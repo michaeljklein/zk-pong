@@ -16,7 +16,7 @@ fn step_fib(
   // let nullifier = std::hash::pedersen_hash([in_x as Field, in_y as Field, out_x as Field, out_y as Field]);
   // let nullifier = std::hash::poseidon::bn254::hash_5([index as Field, in_x as Field, in_y as Field, out_x as Field, out_y as Field]);
 
-  let nullifier = std::hash::poseidon::bn254::hash_2([index as Field,
+  let _nullifier = std::hash::poseidon::bn254::hash_2([index as Field,
     std::hash::poseidon::bn254::hash_2([in_x as Field,
       std::hash::poseidon::bn254::hash_2([in_y as Field,
         std::hash::poseidon::bn254::hash_2([out_x as Field, out_y as Field])
@@ -34,15 +34,15 @@ global PUBLIC_INPUTS = 3;
 // PUBLIC_INPUTS + 1
 global PRIVATE_INPUTS = 4;
 
+// TODO: check against MAIN
 fn main(
     index: u64,
-    verification_key: [Field; 114],
-    proof: [[Field; 97]; 10],
+    verification_key: [Field; 114], // always 114
+    proof: [[Field; 93]; 10], // 93 + num_public_inputs
     public_inputs: [[Field; 1]; PUBLIC_INPUTS],
     private_inputs: [[u64; 3]; PRIVATE_INPUTS],
     key_hash: Field,
-    input_aggregation_object: [Field; 16],
-) -> pub [Field; 16] {
+) {
   assert(index < PUBLIC_INPUTS);
 
   step_fib(
@@ -62,10 +62,15 @@ fn main(
         proof[index].as_slice(),
         public_inputs[index].as_slice(),
         key_hash,
-        input_aggregation_object
-    )
-  } else {
-    input_aggregation_object
+    );
+
+    std::verify_proof(
+        verification_key.as_slice(),
+        proof[index+1].as_slice(),
+        public_inputs[index+1].as_slice(),
+        key_hash,
+    );
+
   }
 }
 
