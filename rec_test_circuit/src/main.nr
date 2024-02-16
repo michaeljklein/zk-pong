@@ -35,11 +35,12 @@ global PUBLIC_INPUTS = 3;
 global PRIVATE_INPUTS = 4;
 
 // TODO: check against MAIN
+#[recursive]
 fn main(
     index: u64,
     verification_key: [Field; 114], // always 114
-    proof: [[Field; 93]; 10], // 93 + num_public_inputs
-    public_inputs: [[Field; 1]; PUBLIC_INPUTS],
+    proof: [[Field; 109]; 10], // 93 + num_public_inputs (+16?)
+    public_inputs: [[Field; 16]; PUBLIC_INPUTS],
     private_inputs: [[u64; 3]; PRIVATE_INPUTS],
     key_hash: Field,
 ) {

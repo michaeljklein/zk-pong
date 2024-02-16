@@ -2,6 +2,58 @@
 //
 // Kernel for ensuring Pong game rules are valid for a particular state transition
 
+use dep::std;
+
+struct GameState {
+  ball_x: i64,
+  ball_y: i64,
+  ball_dx: i64,
+  ball_dy: i64,
+  game_tick: i64,
+  is_first_player: bool,
+  leftPaddle_x: i64,
+  leftPaddle_y: i64,
+  leftPaddle_score: i64,
+  leftPaddle_won: bool,
+  rightPaddle_x: i64,
+  rightPaddle_y: i64,
+  rightPaddle_score: i64,
+  rightPaddle_won: bool,
+}
+
+struct GameMove {
+  leftPaddle_dy: i64,
+  rightPaddle_dy: i64,
+}
+
+impl GameMove {
+  pub fn is_empty(self) {
+    assert(self.leftPaddle_dy == 0);
+    assert(self.rightPaddle_dy == 0);
+  }
+}
+
+pub fn hash_game_state(state: GameState, move: GameMove) -> Field {
+  std::hash::pedersen_hash([
+    state.ball_x as Field,
+    state.ball_y as Field,
+    state.ball_dx as Field,
+    state.ball_dy as Field,
+    state.game_tick as Field,
+    state.is_first_player as Field,
+    state.leftPaddle_x as Field,
+    state.leftPaddle_y as Field,
+    state.leftPaddle_score as Field,
+    state.leftPaddle_won as Field,
+    state.rightPaddle_x as Field,
+    state.rightPaddle_y as Field,
+    state.rightPaddle_score as Field,
+    state.rightPaddle_won as Field,
+    move.leftPaddle_dy as Field,
+    move.rightPaddle_dy as Field,
+  ])
+}
+
 
 //////////////////////////////////////////
 // utils
@@ -63,21 +115,7 @@ fn collides(obj1: GameObject, obj2: GameObject) -> bool {
 
 
 // assert initial state valid
-fn init_pong(
-  out_ball_x: i64,
-  out_ball_y: i64,
-  out_ball_dx: i64,
-  out_ball_dy: i64,
-  out_game_tick: i64,
-  out_leftPaddle_x: i64,
-  out_leftPaddle_y: i64,
-  out_leftPaddle_dy: i64,
-  out_leftPaddle_score: i64,
-  out_rightPaddle_x: i64,
-  out_rightPaddle_y: i64,
-  out_rightPaddle_dy: i64,
-  out_rightPaddle_score: i64
-) {
+pub fn init_pong(state: GameState) {
   let leftPaddle = GameObject {
       x: grid_size * 2,
       y: paddle_y0,
@@ -102,24 +140,29 @@ fn init_pong(
     dy: -ballSpeed,
   };
 
+  let leftPaddle_won: bool = false;
   let leftPaddle_score: i64 = 0;
   let rightPaddle_score: i64 = 0;
+  let rightPaddle_won: bool = false;
   let game_tick: i64 = 0;
   let ball_dx: i64 = ballSpeed;
 
-  assert(ball.x            == out_ball_x,            "unexpected initial tick: ball.x           ");
-  assert(ball.y            == out_ball_y,            "unexpected initial tick: ball.y           ");
-  assert(ball_dx           == out_ball_dx,           "unexpected initial tick: ball_dx          ");
-  assert(ball.dy           == out_ball_dy,           "unexpected initial tick: ball.dy          ");
-  assert(game_tick         == out_game_tick,         "unexpected initial tick: game_tick        ");
-  assert(leftPaddle.x      == out_leftPaddle_x,      "unexpected initial tick: leftPaddle_x     ");
-  assert(leftPaddle.y      == out_leftPaddle_y,      "unexpected initial tick: leftPaddle_y     ");
-  assert(leftPaddle.dy     == out_leftPaddle_dy,     "unexpected initial tick: leftPaddle_dy    ");
-  assert(leftPaddle_score  == out_leftPaddle_score,  "unexpected initial tick: leftPaddle_score ");
-  assert(rightPaddle.x     == out_rightPaddle_x,     "unexpected initial tick: rightPaddle_x    ");
-  assert(rightPaddle.y     == out_rightPaddle_y,     "unexpected initial tick: rightPaddle_y    ");
-  assert(rightPaddle.dy    == out_rightPaddle_dy,    "unexpected initial tick: rightPaddle_dy   ");
-  assert(rightPaddle_score == out_rightPaddle_score, "unexpected initial tick: rightPaddle_score");
+  assert(ball.x            == state.ball_x,            "unexpected initial tick: ball.x           ");
+  assert(ball.y            == state.ball_y,            "unexpected initial tick: ball.y           ");
+  assert(ball_dx           == state.ball_dx,           "unexpected initial tick: ball_dx          ");
+  assert(ball.dy           == state.ball_dy,           "unexpected initial tick: ball.dy          ");
+  assert(game_tick         == state.game_tick,         "unexpected initial tick: game_tick        ");
+  assert(leftPaddle.x      == state.leftPaddle_x,      "unexpected initial tick: leftPaddle_x     ");
+  assert(leftPaddle.y      == state.leftPaddle_y,      "unexpected initial tick: leftPaddle_y     ");
+  assert(leftPaddle_score  == state.leftPaddle_score,  "unexpected initial tick: leftPaddle_score ");
+  assert(leftPaddle_won    == state.leftPaddle_won,    "unexpected initial tick: leftPaddle_won   ");
+  assert(rightPaddle.x     == state.rightPaddle_x,     "unexpected initial tick: rightPaddle_x    ");
+  assert(rightPaddle.y     == state.rightPaddle_y,     "unexpected initial tick: rightPaddle_y    ");
+  assert(rightPaddle_score == state.rightPaddle_score, "unexpected initial tick: rightPaddle_score");
+  assert(rightPaddle_won   == state.rightPaddle_won,   "unexpected initial tick: rightPaddle_won  ");
+  assert(                     state.is_first_player,   "unexpected initial tick: is_first_player  ");
+  // assert(leftPaddle.dy     == state.leftPaddle_dy,     "unexpected initial tick: leftPaddle_dy    ");
+  // assert(rightPaddle.dy    == state.rightPaddle_dy,    "unexpected initial tick: rightPaddle_dy   ");
 }
 
 
@@ -138,63 +181,35 @@ fn init_pong(
 // rightPaddle_y: i64
 // rightPaddle_dy: i64
 // rightPaddle_score: i64
-fn step_pong(
-  in_ball_x: i64,
-  in_ball_y: i64,
-  in_ball_dx: i64,
-  in_ball_dy: i64,
-  in_game_tick: i64,
-  in_leftPaddle_x: i64,
-  in_leftPaddle_y: i64,
-  in_leftPaddle_dy: i64,
-  in_leftPaddle_score: i64,
-  in_rightPaddle_x: i64,
-  in_rightPaddle_y: i64,
-  in_rightPaddle_dy: i64,
-  in_rightPaddle_score: i64,
-
-  out_ball_x: i64,
-  out_ball_y: i64,
-  out_ball_dx: i64,
-  out_ball_dy: i64,
-  out_game_tick: i64,
-  out_leftPaddle_x: i64,
-  out_leftPaddle_y: i64,
-  out_leftPaddle_dy: i64,
-  out_leftPaddle_score: i64,
-  out_rightPaddle_x: i64,
-  out_rightPaddle_y: i64,
-  out_rightPaddle_dy: i64,
-  out_rightPaddle_score: i64
-) {
+pub fn step_pong(in_state: GameState, move: GameMove, out_state: GameState) {
   let mut leftPaddle = GameObject {
-      x: in_leftPaddle_x,
-      y: in_leftPaddle_y,
+      x: in_state.leftPaddle_x,
+      y: in_state.leftPaddle_y,
       width: grid_size,
       height: paddleHeight,
-      dy: in_leftPaddle_dy,
+      dy: move.leftPaddle_dy,
   };
 
   let mut rightPaddle = GameObject {
-      x: in_rightPaddle_x,
-      y: in_rightPaddle_y,
+      x: in_state.rightPaddle_x,
+      y: in_state.rightPaddle_y,
       width: grid_size,
       height: paddleHeight,
-      dy: in_rightPaddle_dy,
+      dy: move.rightPaddle_dy,
   };
 
   let mut ball = GameObject {
-    x: in_ball_x,
-    y: in_ball_y,
+    x: in_state.ball_x,
+    y: in_state.ball_y,
     width: grid_size,
     height: grid_size,
-    dy: in_ball_dy,
+    dy: in_state.ball_dy,
   };
 
-  let mut leftPaddle_score = in_leftPaddle_score;
-  let mut rightPaddle_score = in_rightPaddle_score;
-  let mut game_tick = in_game_tick;
-  let mut ball_dx = in_ball_dx;
+  let mut leftPaddle_score = in_state.leftPaddle_score;
+  let mut rightPaddle_score = in_state.rightPaddle_score;
+  let mut game_tick = in_state.game_tick;
+  let mut ball_dx = in_state.ball_dx;
 
   // game active
   assert(game_tick < max_game_ticks, "game tick past end of game");
@@ -274,141 +289,137 @@ fn step_pong(
   }
 
   game_tick += 1;
+  let is_first_player = !in_state.is_first_player;
 
-  assert(ball.x            == out_ball_x,            "unexpected end of tick: ball.x           ");
-  assert(ball.y            == out_ball_y,            "unexpected end of tick: ball.y           ");
-  assert(ball_dx           == out_ball_dx,           "unexpected end of tick: ball_dx          ");
-  assert(ball.dy           == out_ball_dy,           "unexpected end of tick: ball.dy          ");
-  assert(game_tick         == out_game_tick,         "unexpected end of tick: game_tick        ");
-  assert(leftPaddle.x      == out_leftPaddle_x,      "unexpected end of tick: leftPaddle_x     ");
-  assert(leftPaddle.y      == out_leftPaddle_y,      "unexpected end of tick: leftPaddle_y     ");
-  assert(leftPaddle.dy     == out_leftPaddle_dy,     "unexpected end of tick: leftPaddle_dy    ");
-  assert(leftPaddle_score  == out_leftPaddle_score,  "unexpected end of tick: leftPaddle_score ");
-  assert(rightPaddle.x     == out_rightPaddle_x,     "unexpected end of tick: rightPaddle_x    ");
-  assert(rightPaddle.y     == out_rightPaddle_y,     "unexpected end of tick: rightPaddle_y    ");
-  assert(rightPaddle.dy    == out_rightPaddle_dy,    "unexpected end of tick: rightPaddle_dy   ");
-  assert(rightPaddle_score == out_rightPaddle_score, "unexpected end of tick: rightPaddle_score");
+  assert(ball.x            == out_state.ball_x,            "unexpected end of tick: ball.x           ");
+  assert(ball.y            == out_state.ball_y,            "unexpected end of tick: ball.y           ");
+  assert(ball_dx           == out_state.ball_dx,           "unexpected end of tick: ball_dx          ");
+  assert(ball.dy           == out_state.ball_dy,           "unexpected end of tick: ball.dy          ");
+  assert(game_tick         == out_state.game_tick,         "unexpected end of tick: game_tick        ");
+  assert(is_first_player   == out_state.is_first_player,   "unexpected end of tick: is_first_player  ");
+  assert(leftPaddle.x      == out_state.leftPaddle_x,      "unexpected end of tick: leftPaddle_x     ");
+  assert(leftPaddle.y      == out_state.leftPaddle_y,      "unexpected end of tick: leftPaddle_y     ");
+  assert(leftPaddle_score  == out_state.leftPaddle_score,  "unexpected end of tick: leftPaddle_score ");
+  assert(rightPaddle.x     == out_state.rightPaddle_x,     "unexpected end of tick: rightPaddle_x    ");
+  assert(rightPaddle.y     == out_state.rightPaddle_y,     "unexpected end of tick: rightPaddle_y    ");
+  assert(rightPaddle_score == out_state.rightPaddle_score, "unexpected end of tick: rightPaddle_score");
+  // assert(leftPaddle.dy     == out_state.leftPaddle_dy,     "unexpected end of tick: leftPaddle_dy    ");
+  // assert(rightPaddle.dy    == out_state.rightPaddle_dy,    "unexpected end of tick: rightPaddle_dy   ");
 }
 
 
 
 // end of game assertions
-fn final_step(
-  out_game_tick: i64,
-  out_leftPaddle_score: i64,
-  out_leftPaddle_won: bool,
-  out_rightPaddle_score: i64,
-  out_rightPaddle_won: bool,
-) {
-  if (max_game_ticks == out_game_tick) {
-    if (out_leftPaddle_score > out_rightPaddle_score) {
-      assert(out_leftPaddle_won);
-      assert(!out_rightPaddle_won);
-    } else if (out_rightPaddle_score > out_leftPaddle_score) {
-      assert(!out_leftPaddle_won);
-      assert(out_rightPaddle_won);
+pub fn final_step_pong(state: GameState) {
+  if (max_game_ticks == state.game_tick) {
+    if (state.leftPaddle_score > state.rightPaddle_score) {
+      assert(state.leftPaddle_won);
+      assert(!state.rightPaddle_won);
+    } else if (state.rightPaddle_score > state.leftPaddle_score) {
+      assert(!state.leftPaddle_won);
+      assert(state.rightPaddle_won);
     } else {
-      assert(!out_leftPaddle_won);
-      assert(!out_rightPaddle_won);
+      assert(!state.leftPaddle_won);
+      assert(!state.rightPaddle_won);
     }
   }
 }
 
 
-fn main(x: Field, y: pub Field) {
-
-  let leftPaddle = GameObject {
-      x: grid_size * 2,
-      y: paddle_y0,
-      width: grid_size,
-      height: paddleHeight,
-      dy: 0,
-  };
-
-  let rightPaddle = GameObject {
-      x: canvas_width - grid_size * 3,
-      y: paddle_y0,
-      width: grid_size,
-      height: paddleHeight,
-      dy: 0,
-  };
-
-  let ball = GameObject {
-    x: canvas_width_half,
-    y: canvas_height_half,
-    width: grid_size,
-    height: grid_size,
-    dy: -ballSpeed,
-  };
-
-  let leftPaddle_score: i64 = 0;
-  let rightPaddle_score: i64 = 0;
-  let game_tick: i64 = 0;
-  let ball_dx: i64 = ballSpeed;
-
-
-  init_pong(
-    ball.x,
-    ball.y,
-    ball_dx,
-    ball.dy,
-    game_tick,
-    leftPaddle.x,
-    leftPaddle.y,
-    leftPaddle.dy,
-    leftPaddle_score,
-    rightPaddle.x,
-    rightPaddle.y,
-    rightPaddle.dy,
-    rightPaddle_score,
-  );
-
-  step_pong(
-    ball.x,
-    ball.y,
-    ball_dx,
-    ball.dy,
-    game_tick,
-    leftPaddle.x,
-    leftPaddle.y,
-    leftPaddle.dy,
-    leftPaddle_score,
-    rightPaddle.x,
-    rightPaddle.y,
-    rightPaddle.dy,
-    rightPaddle_score,
-
-    ball.x + ball_dx,
-    ball.y + ball.dy,
-    ball_dx,
-    ball.dy,
-    game_tick + 1,
-    leftPaddle.x,
-    leftPaddle.y,
-    leftPaddle.dy,
-    leftPaddle_score,
-    rightPaddle.x,
-    rightPaddle.y,
-    rightPaddle.dy,
-    rightPaddle_score,
-  );
-
-  final_step(
-    max_game_ticks,
-    leftPaddle_score,
-    false, // out_leftPaddle_won
-    rightPaddle_score,
-    false, // out_rightPaddle_won
-  );
-
-  assert(x != y);
-}
-
-#[test]
-fn test_main() {
-    main(1, 2);
-
-    // Uncomment to make test fail
-    // main(1, 1);
-}
+// fn main(x: Field, y: pub Field) {
+//
+//   let leftPaddle = GameObject {
+//       x: grid_size * 2,
+//       y: paddle_y0,
+//       width: grid_size,
+//       height: paddleHeight,
+//       dy: 0,
+//   };
+//
+//   let rightPaddle = GameObject {
+//       x: canvas_width - grid_size * 3,
+//       y: paddle_y0,
+//       width: grid_size,
+//       height: paddleHeight,
+//       dy: 0,
+//   };
+//
+//   let ball = GameObject {
+//     x: canvas_width_half,
+//     y: canvas_height_half,
+//     width: grid_size,
+//     height: grid_size,
+//     dy: -ballSpeed,
+//   };
+//
+//   let leftPaddle_score: i64 = 0;
+//   let rightPaddle_score: i64 = 0;
+//   let game_tick: i64 = 0;
+//   let ball_dx: i64 = ballSpeed;
+//
+//
+//   init_pong(
+//     ball.x,
+//     ball.y,
+//     ball_dx,
+//     ball.dy,
+//     game_tick,
+//     leftPaddle.x,
+//     leftPaddle.y,
+//     leftPaddle.dy,
+//     leftPaddle_score,
+//     rightPaddle.x,
+//     rightPaddle.y,
+//     rightPaddle.dy,
+//     rightPaddle_score,
+//   );
+//
+//   step_pong(
+//     ball.x,
+//     ball.y,
+//     ball_dx,
+//     ball.dy,
+//     game_tick,
+//     leftPaddle.x,
+//     leftPaddle.y,
+//     leftPaddle.dy,
+//     leftPaddle_score,
+//     rightPaddle.x,
+//     rightPaddle.y,
+//     rightPaddle.dy,
+//     rightPaddle_score,
+//
+//     ball.x + ball_dx,
+//     ball.y + ball.dy,
+//     ball_dx,
+//     ball.dy,
+//     game_tick + 1,
+//     leftPaddle.x,
+//     leftPaddle.y,
+//     leftPaddle.dy,
+//     leftPaddle_score,
+//     rightPaddle.x,
+//     rightPaddle.y,
+//     rightPaddle.dy,
+//     rightPaddle_score,
+//   );
+//
+//   final_step(
+//     max_game_ticks,
+//     leftPaddle_score,
+//     false, // out_leftPaddle_won
+//     rightPaddle_score,
+//     false, // out_rightPaddle_won
+//   );
+//
+//   assert(x != y);
+// }
+//
+// #[test]
+// fn test_main() {
+//     main(1, 2);
+//
+//     // Uncomment to make test fail
+//     // main(1, 1);
+// }
 

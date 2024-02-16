@@ -3,12 +3,64 @@
 // Kernel for certifying a game log once it's ended
 
 use dep::std;
+use dep::pong::{GameMove, GameState, init_pong, step_pong, final_step_pong, hash_game_state};
 
 
-global MAX_PINGS = 256;
-// global PUBLIC_INPUTS = 1792; // 7 * 256
-global PUBLIC_INPUTS = 850; // 7 * 256
+// global MAX_PINGS = 256;
+global MAX_PINGS = 10;
 
+
+struct Sig {
+  bytes: [u8; 64],
+}
+
+
+struct Pubkey {
+  x: [u8; 32],
+  y: [u8; 32],
+}
+
+impl Pubkey {
+  fn verify(self, sig: Sig, x: Field) {
+    let message_slice = x.to_le_radix(256, 32);
+    let mut message: [u8; 32] = [0; 32];
+    for i in 0..32 {
+        message[i] = message_slice[i];
+    }
+    assert(std::ecdsa_secp256k1::verify_signature(self.x, self.y, sig.bytes, message));
+  }
+}
+
+
+trait StepState<T> {
+  fn assert_initial_state(self);
+  fn assert_step(self, move: T, new_state: Self);
+  fn assert_final_state(self);
+  fn is_first_user(self) -> bool;
+  fn hash_to_field(self, move: T) -> Field;
+}
+
+impl StepState<GameMove> for GameState {
+  fn assert_initial_state(self) {
+    init_pong(self)
+  }
+
+  fn assert_step(self, move: GameMove, new_state: Self) {
+    step_pong(self, move, new_state)
+  }
+
+  fn assert_final_state(self) {
+    final_step_pong(self)
+  }
+
+  fn is_first_user(self) -> bool {
+    self.is_first_player
+  }
+
+  fn hash_to_field(self, move: GameMove) -> Field {
+    hash_game_state(self, move)
+  }
+}
 
 
 // step kernel: (state_N, state_N', move_N', sig_N')
@@ -35,21 +87,21 @@ global PUBLIC_INPUTS = 850; // 7 * 256
 //   finalize_kernel
 // end
 fn step_kernel<S, T>(
-    old_state: S,
-    new_state: S,
-    move: T,
-    index: Field,
-    sig: (),
-    summary: pub Field,
-    user_1: Field,
-    user_2: Field,
-) {
-
+  old_state: S,
+  new_state: S,
+  move: T,
+  index: Field,
+  sig: Sig,
+  user_1: Pubkey,
+  user_2: Pubkey,
+)
+where
+  S: StepState<T>
+{
     // bootstrap with old_state = new_state = initial_state
     if (index == 0) {
         old_state.assert_initial_state();
         new_state.assert_initial_state();
-
     }
 
     if (index + 1 == MAX_PINGS) {
@@ -60,54 +112,35 @@ fn step_kernel<S, T>(
     // assert(old_state.is_first_user != new_state.is_first_user);
     old_state.assert_step(move, new_state);
 
-    let current_user = if new_state.is_first_user {
+    let current_user = if new_state.is_first_user() {
         user_1
     } else {
         user_2
     };
-    verify(current_user, new_state, sig)
+    current_user.verify(sig, new_state.hash_to_field(move));
 }
-
-
-
-
-
 
 fn main(
-    verification_key : [Field; 114],
-    key_hash : Field,
-    index : Field,
-    proof_a : [[Field; 97]; PUBLIC_INPUTS],
-    public_inputs : [[Field; 3]; PUBLIC_INPUTS],
-    input_aggregation_object : [Field; 16],
-) -> pub [Field; 16] {
-    let output_aggregation_object_a = std::verify_proof(
-        verification_key.as_slice(),
-        proof_a[index].as_slice(),
-        public_inputs[index].as_slice(),
-        key_hash,
-        input_aggregation_object
-    );
-
-    output_aggregation_object_a
-
-    // let output_aggregation_object = std::verify_proof(
-    //     verification_key.as_slice(),
-    //     proof_b.as_slice(),
-    //     public_inputs.as_slice(),
-    //     key_hash,
-    //     output_aggregation_object_a
-    // );
-    //
-    // let mut output = [0; 16];
-    // for i in 0..16 {
-    //     output[i] = output_aggregation_object[i];
-    // }
-    // output
+  index: Field,
+  game_log: [GameState; MAX_PINGS],
+  game_moves: [GameMove; MAX_PINGS],
+  signatures: [Sig; MAX_PINGS],
+  user_1: Pubkey,
+  user_2: Pubkey,
+) {
+  if (index == 0) {
+    assert(game_moves[0].leftPaddle_dy == game_moves[1].leftPaddle_dy);
+    assert(game_moves[0].rightPaddle_dy == game_moves[1].rightPaddle_dy);
+    assert(signatures[0].bytes == signatures[1].bytes);
+  }
+  step_kernel(
+    game_log[index], 
+    game_log[index+1], 
+    game_moves[index+1], 
+    index,
+    signatures[index+1], 
+    user_1,
+    user_2
+  )
 }
-
-
-
-
-
 
