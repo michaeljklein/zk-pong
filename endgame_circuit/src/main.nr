@@ -9,15 +9,14 @@ use dep::pong::{GameMove, GameState, init_pong, step_pong, final_step_pong, hash
 // global MAX_PINGS = 256;
 global MAX_PINGS = 10;
 
-
 struct Sig {
   bytes: [u8; 64],
 }
 
 
 struct Pubkey {
-  x: [u8; 32],
-  y: [u8; 32],
+  x: Field,
+  y: Field,
 }
 
 impl Pubkey {
@@ -27,7 +26,8 @@ impl Pubkey {
     for i in 0..32 {
         message[i] = message_slice[i];
     }
-    assert(std::ecdsa_secp256k1::verify_signature(self.x, self.y, sig.bytes, message));
+    // assert(std::ecdsa_secp256k1::verify_signature(self.x, self.y, sig.bytes, message));
+    assert(std::schnorr::verify_signature(self.x, self.y, sig.bytes, message));
   }
 }
 
